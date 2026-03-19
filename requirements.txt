@@ -1,0 +1,7 @@
+numpy
+opencv-python
+pyautogui
+pynput
+pillow
+dbus-python
+PyGObject
