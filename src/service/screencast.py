@@ -2,14 +2,21 @@ import threading
 import dbus
 import time
 import numpy as np
+import subprocess
+import os
+import cv2
+import pyautogui
+
+from PIL import ImageGrab
+from typing import Optional, Tuple
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib, Gst
 
 # =============================================================================
-# SCREENCAST CAPTURE (Linux DBus + GStreamer) - FIXED VERSION
+# SCREENCAST CAPTURE (Linux DBus + GStreamer)
 # =============================================================================
 
-class ScreenCastCapture:
+class ScreenCastCaptureLinux:
     """
     Real-time screen capture using GNOME/Mutter ScreenCast API (PipeWire).
     Runs a GStreamer pipeline to consume the PipeWire stream.
@@ -202,3 +209,66 @@ class ScreenCastCapture:
         if self.loop:
             self.loop.quit()
         self.running = False
+
+# =============================================================================
+# SCREEN CAPTURE (Windows)
+# =============================================================================
+
+class ScreenCastCaptureWindows:
+    """
+    Screen capture with Opevcv + PIL ImageGrab.
+    """
+                
+    def capture_region(self, region):
+        """Capture a specific region of the screen."""
+        x, y, w, h = region
+        
+        if w < 10 or h < 10:
+            return None
+            
+        # Try PIL ImageGrab first (works on most systems)
+        try:
+            img = ImageGrab.grab(bbox=(x, y, x + w, y + h))
+            if img is not None:
+                return cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        except Exception as e:
+            print(f"ImageGrab failed: {e}")
+            
+        # Try scrot on Linux
+        if self.use_scrot and self.scrot_path:
+            try:
+                import tempfile
+                with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+                    tmp_path = tmp.name
+                    
+                subprocess.run([
+                    'scrot', '-a', f'{x},{y},{w},{h}', tmp_path
+                ], check=True, timeout=5, capture_output=True)
+                
+                if os.path.exists(tmp_path):
+                    img = cv2.imread(tmp_path)
+                    os.unlink(tmp_path)
+                    if img is not None:
+                        return img
+            except Exception as e:
+                print(f"scrot failed: {e}")
+                
+        # Try pyautogui as last resort
+        try:
+            screenshot = pyautogui.screenshot(region=(x, y, w, h))
+            return cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
+        except Exception as e:
+            print(f"pyautogui failed: {e}")
+            
+        return None
+        
+    def capture_full(self) -> Optional[np.ndarray]:
+        """Capture full screen."""
+        try:
+            img = ImageGrab.grab()
+            if img is not None:
+                return cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        except Exception as e:
+            print(f"Full capture failed: {e}")
+            
+        return None

@@ -1,7 +1,9 @@
 import pyautogui
 import os
 import sys
+import gi
 
+gi.require_version('Gst', '1.0')
 from gi.repository import Gst
 from core.gui import AppGUI
 
@@ -26,14 +28,14 @@ def get_platform():
             'wayland': wayland,
             'x11': x11
         }
-    elif sys.platform == 'win32':
+    elif sys.platform == 'win32' or sys.platform == 'win64':
         return {'system': 'windows'}
     elif sys.platform == 'darwin':
         return {'system': 'mac'}
     return {'system': 'unknown'}
 
 PLATFORM = get_platform()
-
+print(type(PLATFORM))
 # =============================================================================
 # MAIN
 # =============================================================================
@@ -48,7 +50,7 @@ def main():
     print("Bookworm Adventures KeyCast")
     print("=" * 60)
     create_templates_folder()
-    app = AppGUI()
+    app = AppGUI(PLATFORM)
     app.run()
 
 if __name__ == "__main__":

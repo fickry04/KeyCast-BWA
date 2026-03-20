@@ -16,16 +16,17 @@ from tkinter import scrolledtext
 # =============================================================================
 
 class AppGUI:
-    def __init__(self):
+    def __init__(self, PLATFORM):
         self.config = AppConfig()
         self.state = AppState(self.config)
+        self.PLATFORM = PLATFORM
         
         self.root = tk.Tk()
         self.root.title("Bookworm Adventure KeyCast")
         self.root.geometry("1000x850")
         self.root.configure(bg='#1e1e1e')
         
-        self.scanner = BoardScanner(self.state, template_folder="templates", threshold=self.config.config['threshold'])
+        self.scanner = BoardScanner(PLATFORM, self.state, template_folder="templates", threshold=self.config.config['threshold'])
         self.click_controller = ClickController(self.state)
         
         self.hotkey_listener = GlobalHotkeyListener(self.handle_global_hotkey, self.handle_typing_input)

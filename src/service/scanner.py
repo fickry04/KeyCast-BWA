@@ -1,4 +1,5 @@
-from service.screencast import ScreenCastCapture
+from service.screencast import ScreenCastCaptureLinux
+from service.screencast import ScreenCastCaptureWindows
 from core.matcher import MultiScaleTemplateMatcher
 import cv2
 
@@ -7,14 +8,16 @@ import cv2
 # =============================================================================
 
 class BoardScanner:
-    def __init__(self, state, template_folder="templates", threshold=0.75):
+    def __init__(self, PLATFORM, state, template_folder="templates", threshold=0.75):
         self.state = state
         self.template_folder = template_folder
         self.threshold = threshold
         self.matcher = MultiScaleTemplateMatcher()
         
-        # Use the new ScreenCastCapture
-        self.capture = ScreenCastCapture()
+        if PLATFORM['system'] == 'linux':
+            self.capture = ScreenCastCaptureLinux()
+        else:
+            self.capture = ScreenCastCaptureWindows()
         
         self.last_screenshot = None
         self.last_detected = {}
@@ -32,7 +35,12 @@ class BoardScanner:
     def capture_board(self):
         if self.state.board_region is None:
             return None, "Board region not set"
-            
+        
+        x, y, w, h = self.state.board_region
+        
+        if w < 10 or h < 10:
+            return None, "Board region too small"
+
         screenshot = self.capture.capture_region(self.state.board_region)
         if screenshot is None:
             return None, "Failed to capture board (ScreenCast not ready?)"
