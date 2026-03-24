@@ -196,11 +196,6 @@ class ScreenCastCaptureLinux:
             
         return full_frame[y1:y2, x1:x2]
 
-    def capture_full(self):
-        """Capture full screen."""
-        with self.frame_lock:
-            return self.latest_frame.copy() if self.latest_frame is not None else None
-
     def stop(self):
         """Stop the pipeline and session."""
         if self.pipeline:
@@ -259,16 +254,5 @@ class ScreenCastCaptureWindows:
             return cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
         except Exception as e:
             print(f"pyautogui failed: {e}")
-            
-        return None
-        
-    def capture_full(self) -> Optional[np.ndarray]:
-        """Capture full screen."""
-        try:
-            img = ImageGrab.grab()
-            if img is not None:
-                return cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-        except Exception as e:
-            print(f"Full capture failed: {e}")
             
         return None

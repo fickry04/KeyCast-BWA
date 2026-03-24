@@ -15,8 +15,10 @@ class BoardScanner:
         self.matcher = MultiScaleTemplateMatcher()
         
         if PLATFORM['system'] == 'linux':
+            print('Using ScreenCastCaptureLinux')
             self.capture = ScreenCastCaptureLinux()
         else:
+            print('Using ScreenCastCaptureWindows')
             self.capture = ScreenCastCaptureWindows()
         
         self.last_screenshot = None

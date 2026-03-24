@@ -3,6 +3,11 @@ import cv2
 import time
 
 from PIL import Image, ImageTk
+try:
+    import PIL._tkinter_finder  # noqa: F401
+except Exception:
+    pass
+
 from config.config import AppConfig, AppState
 from service.scanner import BoardScanner
 from service.key_listener import GlobalHotkeyListener
