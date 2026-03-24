@@ -8,34 +8,21 @@ import cv2
 # =============================================================================
 
 class BoardScanner:
-    def __init__(self, PLATFORM, state=None, template_folder="templates", threshold=0.75):
-        """Create a board scanner.
-
-        Supports both call styles:
-        - BoardScanner(state, ...)
-        - BoardScanner(PLATFORM, state, ...)
-        """
-        if state is None:
-            self.state = PLATFORM
-        else:
-            platform = PLATFORM
-            self.state = state
-
+    def __init__(self, PLATFORM, state, template_folder="templates", threshold=0.75):
+        self.state = state
         self.template_folder = template_folder
         self.threshold = threshold
         self.matcher = MultiScaleTemplateMatcher()
         
-        if isinstance(platform, dict) and platform.get('system') == 'linux':
-            print('Using ScreenCastCaptureLinux()')
+        if PLATFORM['system'] == 'linux':
             self.capture = ScreenCastCaptureLinux()
         else:
-            print('Using ScreenCastCaptureWindows()')
             self.capture = ScreenCastCaptureWindows()
         
         self.last_screenshot = None
         self.last_detected = {}
         self.load_templates()
-
+        
     def load_templates(self):
         print(f"Loading templates from: {self.template_folder}")
         count = self.matcher.load_templates(self.template_folder)
