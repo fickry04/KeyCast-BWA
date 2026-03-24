@@ -3,5 +3,5 @@ opencv-python
 pyautogui
 pynput
 pillow
-dbus-python; platform_system == "Linux"
-PyGObject; platform_system == "Linux"
+dbus-python
+PyGObject
