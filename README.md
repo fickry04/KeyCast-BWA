@@ -40,7 +40,7 @@ py -m venv .venv
 pip install -r requirements.txt
 pip install pyinstaller
 
-pyinstaller --noconfirm --clean --windowed keycast-bwa.spec
+pyinstaller --noconfirm --clean keycast-bwa.spec
 ```
 
 ## Example

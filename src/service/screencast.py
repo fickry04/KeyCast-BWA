@@ -1,5 +1,4 @@
 import threading
-import dbus
 import time
 import numpy as np
 import subprocess
@@ -8,9 +7,6 @@ import cv2
 import pyautogui
 
 from PIL import ImageGrab
-from typing import Optional, Tuple
-from dbus.mainloop.glib import DBusGMainLoop
-from gi.repository import GLib, Gst
 
 # =============================================================================
 # SCREENCAST CAPTURE (Linux DBus + GStreamer)
@@ -23,6 +19,22 @@ class ScreenCastCaptureLinux:
     """
 
     def __init__(self):
+
+        try:
+            import dbus  # type: ignore
+            from dbus.mainloop.glib import DBusGMainLoop  # type: ignore
+            from gi.repository import GLib, Gst  # type: ignore
+        except Exception as exc:
+            raise RuntimeError(
+                "Linux ScreenCast requires dbus-python + PyGObject (Gst/GLib). "
+                "Install system packages for GStreamer/PipeWire and PyGObject."
+            ) from exc
+        
+        self._dbus = dbus
+        self._DBusGMainLoop = DBusGMainLoop
+        self._GLib = GLib
+        self._Gst = Gst
+
         self.loop = None
         self.pipeline = None
         self.latest_frame = None
@@ -52,11 +64,11 @@ class ScreenCastCaptureLinux:
 
     def _run_mainloop(self):
         """Run the GLib MainLoop and setup DBus."""
-        DBusGMainLoop(set_as_default=True)
-        self.loop = GLib.MainLoop()
+        self._DBusGMainLoop(set_as_default=True)
+        self.loop = self._GLib.MainLoop()
         
         try:
-            bus = dbus.SessionBus()
+            bus = self._dbus.SessionBus()
             screen_cast_proxy = bus.get_object(self.screen_cast_iface, '/org/gnome/Mutter/ScreenCast')
             
             # Create Session
@@ -68,7 +80,7 @@ class ScreenCastCaptureLinux:
             # Record Monitor 0 (Primary Monitor)
             stream_path = self.session.RecordMonitor(
                 "", 
-                dbus.types.Dictionary({'cursor-mode': dbus.UInt32(1, variant_level=1)}),
+                self._dbus.types.Dictionary({'cursor-mode': self._dbus.UInt32(1, variant_level=1)}),
                 dbus_interface=self.screen_cast_session_iface
             )
             print(f"Stream path: {stream_path}")
@@ -105,7 +117,7 @@ class ScreenCastCaptureLinux:
         )
         
         try:
-            self.pipeline = Gst.parse_launch(pipeline_str)
+            self.pipeline = self._Gst.parse_launch(pipeline_str)
             appsink = self.pipeline.get_by_name("sink")
             appsink.connect("new-sample", self._on_new_sample)
             
@@ -116,8 +128,8 @@ class ScreenCastCaptureLinux:
             bus.connect("message::warning", self._on_bus_warning)
             bus.connect("message::stream-status", self._on_bus_status)
             
-            ret = self.pipeline.set_state(Gst.State.PLAYING)
-            if ret == Gst.StateChangeReturn.FAILURE:
+            ret = self.pipeline.set_state(self._Gst.State.PLAYING)
+            if ret == self._Gst.StateChangeReturn.FAILURE:
                 print("ERROR: Pipeline failed to go to PLAYING state.")
                 self.running = False
             else:
@@ -158,7 +170,7 @@ class ScreenCastCaptureLinux:
             height = structure.get_value('height')
             
             # Map buffer to readable memory
-            result, map_info = buffer.map(Gst.MapFlags.READ)
+            result, map_info = buffer.map(self._Gst.MapFlags.READ)
             if result:
                 try:
                     # Create numpy array
@@ -173,8 +185,8 @@ class ScreenCastCaptureLinux:
                 finally:
                     buffer.unmap(map_info)
                     
-            return Gst.FlowReturn.OK
-        return Gst.FlowReturn.ERROR
+            return self._Gst.FlowReturn.OK
+        return self._Gst.FlowReturn.ERROR
 
     def capture_region(self, region):
         """Capture a specific region from the latest frame."""
@@ -199,8 +211,8 @@ class ScreenCastCaptureLinux:
     def stop(self):
         """Stop the pipeline and session."""
         if self.pipeline:
-            self.pipeline.send_event(Gst.Event.new_eos())
-            self.pipeline.set_state(Gst.State.NULL)
+            self.pipeline.send_event(self._Gst.Event.new_eos())
+            self.pipeline.set_state(self._Gst.State.NULL)
         if self.loop:
             self.loop.quit()
         self.running = False
