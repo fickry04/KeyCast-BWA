@@ -125,7 +125,7 @@ class AppGUI:
         tk.Label(threshold_frame, text="Threshold:", font=('Sans', 9), bg='#2d2d2d', fg='#aaaaaa').pack(side=tk.LEFT)
         
         self.threshold_var = tk.DoubleVar(value=self.config.config['threshold'])
-        tk.Scale(threshold_frame, from_=0.5, to=0.95, resolution=0.05, orient=tk.HORIZONTAL, variable=self.threshold_var, command=self.update_threshold, length=120, bg='#2d2d2d', fg='#ffffff', troughcolor='#3d3d3d').pack(side=tk.LEFT)
+        tk.Scale(threshold_frame, from_=0.85, to=0.95, resolution=0.01, orient=tk.HORIZONTAL, variable=self.threshold_var, command=self.update_threshold, length=120, bg='#2d2d2d', fg='#ffffff', troughcolor='#3d3d3d').pack(side=tk.LEFT)
         
         auto_frame = tk.Frame(control_frame, bg='#2d2d2d')
         auto_frame.pack(fill=tk.X, pady=5)
